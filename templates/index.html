@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Генератор постов для соцсетей</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background-color: #fff;
+        }
+        h1 {
+            text-align: center;
+            color: #000;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+        }
+        label {
+            display: block;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .row {
+            display: flex;
+            gap: 1rem;
+        }
+        .row select {
+            flex: 1;
+        }
+        button {
+            margin-top: 1.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            background-color: #0078D4;
+            color: white;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover:not(:disabled) {
+            background-color: #005a9e;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #e6f4ea;
+            padding: 1rem;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+            font-size: 1rem;
+        }
+        .error {
+            max-width: 600px;
+            margin: 1rem auto;
+            color: red;
+            font-weight: bold;
+        }
+        /* Спиннер */
+        .spinner {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .spinner div {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #0078D4;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Генератор постов для соцсетей</h1>
+
+    <form method="POST" id="postForm">
+        <label for="url">URL сайта:</label>
+        <input type="text" id="url" name="url" value="{{ url }}" required placeholder="https://example.com/article">
+
+        <label for="style">Стиль поста:</label>
+        <select id="style" name="style">
+            {% for s in styles %}
+                <option value="{{ s }}" {% if s == style or (not style and s == "информативный") %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Модель и температура:</label>
+        <div class="row">
+            <select id="model" name="model">
+                {% for m in models %}
+                    <option value="{{ m }}" {% if m == model or (not model and m == "gpt-4o-mini") %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+            <select id="temperature" name="temperature">
+                {% for t in temps %}
+                    <option value="{{ t }}" {% if t == temperature or (not temperature and t == 0.7) %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <label for="max_length">Максимум символов:</label>
+        <input type="text" id="max_length" name="max_length" value="{{ max_length or 800 }}">
+
+        <button type="submit" id="generateBtn">Сгенерировать</button>
+    </form>
+
+    <div id="spinner" class="spinner">
+        <div></div>
+        <p>Генерируем пост...</p>
+    </div>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if post %}
+        <div class="result">{{ post }}</div>
+    {% endif %}
+
+    <script>
+        document.getElementById('postForm').addEventListener('submit', function() {
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Генерация…';
+            document.getElementById('spinner').style.display = 'block';
+        });
+
+        // Автоподстановка температуры для gpt-5-mini
+        document.getElementById("model").addEventListener("change", function() {
+            const tempSelect = document.getElementById("temperature");
+            if (this.value === "gpt-5-mini") {
+                tempSelect.value = "1.0";
+                tempSelect.disabled = true;
+            } else {
+                tempSelect.disabled = false;
+            }
+        });
+
+        // Проверка при загрузке страницы
+        window.addEventListener("DOMContentLoaded", function() {
+            const modelSelect = document.getElementById("model");
+            const tempSelect = document.getElementById("temperature");
+            if (modelSelect.value === "gpt-5-mini") {
+                tempSelect.value = "1.0";
+                tempSelect.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
